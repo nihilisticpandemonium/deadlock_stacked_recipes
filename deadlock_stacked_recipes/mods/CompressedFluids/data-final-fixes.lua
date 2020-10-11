@@ -156,7 +156,10 @@ if mods["CompressedFluids"] then
                 -- log(string.format("Skipping .. %s", recipe_table.name))
             else
                 Recipes.standardize_recipe(recipe_table)
-
+                
+                if not recipe_table.icon and not recipe_table.icons then
+                    goto continue
+                end
                 local recipe_icons = rusty_icons.of(recipe_table)
                 local recipe_locale = rusty_locale.of(recipe_table)
                 local recipe_main_product = rusty_recipes.get_main_product(recipe_table)
@@ -263,7 +266,9 @@ if mods["CompressedFluids"] then
                             log("hmm")
                         end
 
-                        subgroup = MakeSubGroup(subgroup)
+                        if subgroup then
+                            subgroup = MakeSubGroup(subgroup)
+                        end
                         if subgroup then
                             recipe_table.subgroup = subgroup
                         end
@@ -277,6 +282,7 @@ if mods["CompressedFluids"] then
                     CheckProductivity(orig_name, recipe_table.name)
                     parsed_recipes[orig_name] = recipe_table.name
                 end
+                ::continue::
             end
         end
 
