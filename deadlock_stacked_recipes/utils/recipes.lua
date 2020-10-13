@@ -23,6 +23,8 @@ function Recipes.standardize_recipe(prototype)
             energy_required = prototype.energy_required,
             requester_paste_multiplier = prototype.requester_paste_multiplier,
             hidden = prototype.hidden,
+            icon = prototype.icon,
+            icons = prototype.icons and util.table.deepcopy(prototype.icons) or nil,
             ingredients = prototype.ingredients,
             results = prototype.results,
             result = prototype.result,
@@ -34,6 +36,8 @@ function Recipes.standardize_recipe(prototype)
         prototype.requester_paste_multiplier = nil
         prototype.hidden = nil
         prototype.ingredients = nil
+        prototype.icon = nil
+        prototype.icons = nil
         prototype.results = nil
         prototype.result = nil
         prototype.result_count = nil

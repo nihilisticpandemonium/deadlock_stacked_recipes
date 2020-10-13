@@ -127,7 +127,7 @@ function Deadlock.ReOrderTechnologyBehindBeacons()
                 if tech.effects then
                     local effects = {}
                     for _, effect in pairs(tech.effects) do
-                        if effect.type == "unlock-recipe" and (Func.starts_with(effect.recipe, "StackedRecipe-") or Func.starts_with(effect.recipe, "DSR_HighPressure-")) then
+                        if data.raw.technology[dsr_tech] and data.raw.technology[dsr_tech].effects and effect.type == "unlock-recipe" and (Func.starts_with(effect.recipe, "StackedRecipe-") or Func.starts_with(effect.recipe, "DSR_HighPressure-")) then
                             table.insert(data.raw.technology[dsr_tech].effects, {type = "unlock-recipe", recipe = effect.recipe})
                             track_touched[effect.recipe] = true
                         else
