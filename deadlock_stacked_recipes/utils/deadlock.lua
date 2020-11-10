@@ -11,6 +11,21 @@ local logger = require("utils/logging").logger
 local Func = require("utils.func")
 local Deadlock = {}
 
+-- multiply a number with a unit (kJ, kW etc) at the end
+local function multiply_number_unit(property, mult)
+    local value, unit
+    value = string.match(property, "%d+")
+    if string.match(property, "%d+%.%d+") then -- catch floats
+        value = string.match(property, "%d+%.%d+")
+    end
+    unit = string.match(property, "%a+")
+    if unit == nil then
+        return value * mult
+    else
+        return ((value * mult) .. unit)
+    end
+end
+
 local function FixRecipeLocalisedNames()
     for recipe_name, recipe_table in pairs(data.raw.recipe) do
         if Func.starts_with(recipe_name, "StackedRecipe") then
@@ -33,6 +48,32 @@ local function FixItemLocalisedNames()
                 local locale = rusty_locale.of_item(data.raw.item[parent_item])
                 item_table.localised_name[2] = locale.name
                 logger("2", string.format("FixItemLocalisedNames .. %s .. %s", item_name, serpent.block(locale.name)))
+            end
+        end
+    end
+end
+
+function Deadlock.FixFuel()
+    local deadlock_stack_size = settings.startup["deadlock-stack-size"].value
+
+    for item_name, item_table in pairs(data.raw.item) do
+        if string.match(item_name, "deadlock%-stack%-") then
+            local parent_item = string.sub(item_name, 16)
+            if data.raw.item[parent_item] and data.raw.item[parent_item].fuel_value then
+                local parent = data.raw.item[parent_item]
+                item_table.fuel_category = parent.fuel_category
+                item_table.fuel_acceleration_multiplier = parent.fuel_acceleration_multiplier
+                item_table.fuel_top_speed_multiplier = parent.fuel_top_speed_multiplier
+                item_table.fuel_emissions_multiplier = parent.fuel_emissions_multiplier
+                item_table.fuel_value = multiply_number_unit(parent.fuel_value, deadlock_stack_size)
+            end
+            if data.raw.item[parent_item] and data.raw.item[parent_item].burnt_result then
+                if item_table.burnt_result == nil then
+                    local burnt_result = "deadlock-stack-" .. data.raw.item[parent_item].burnt_result
+                    if data.raw.item[burnt_result] then
+                        item_table.burnt_result = "deadlock-stack-" .. data.raw.item[parent_item].burnt_result
+                    end
+                end
             end
         end
     end
@@ -476,39 +517,29 @@ local function CheckStackedProductivity(orig)
     end
 end
 
+local function ScaleUpFluidIngredients(ingredients, fluid_to_find, multiplier)
+    for _, ingredient in pairs(ingredients) do
+        local name
+        if ingredient.name then
+            name = ingredient.name
+        else
+            name = ingredient[1]
+        end
+        if name == fluid_to_find then
+            ingredient.amount = ingredient.amount * multiplier
+        end
+    end
+end
+
 local function ScaleUpFluid(recipe, fluid_to_find, multiplier)
-    local normal_ingredients = recipe.ingredients or recipe.normal.ingredients
-    local expensive_ingredients
-    if recipe.expensive then
-        expensive_ingredients = recipe.expensive.ingredients
-    else
-        expensive_ingredients = {}
+    if recipe.ingredients then
+        ScaleUpFluidIngredients(recipe.ingredients, fluid_to_find, multiplier)
     end
-
-    --update normal ingredients
-    for _, ingredient in pairs(normal_ingredients) do
-        local name
-        if ingredient.name then
-            name = ingredient.name
-        else
-            name = ingredient[1]
-        end
-        if name == fluid_to_find then
-            ingredient.amount = ingredient.amount * multiplier
-        end
+    if recipe.normal and recipe.normal.ingredients then
+        ScaleUpFluidIngredients(recipe.normal.ingredients, fluid_to_find, multiplier)
     end
-
-    --update expensive ingredients
-    for _, ingredient in pairs(expensive_ingredients) do
-        local name
-        if ingredient.name then
-            name = ingredient.name
-        else
-            name = ingredient[1]
-        end
-        if name == fluid_to_find then
-            ingredient.amount = ingredient.amount * multiplier
-        end
+    if recipe.expensive and recipe.expensive.ingredients then
+        ScaleUpFluidIngredients(recipe.expensive.ingredients, fluid_to_find, multiplier)
     end
 end
 
@@ -591,7 +622,7 @@ local function MakeStackedRecipe(recipe, ingredients, results)
     end
     logger("5", string.format("NewRecipeResultsFlag = %s", NewRecipeResultsFlag))
 
-    -- Main Product
+    -- Main Product1
     logger("4", "Processing new recipe main_product")
     local StackedProduct = nil
     if NewRecipe.main_product then
@@ -718,7 +749,7 @@ function Deadlock.MakeStackedRecipes()
             local SomethingStacked = false
             local StackedIngredientsFound = true
             local StackedResultsFound = true
-            local ingredients
+            local ingredients = nil
             local expensive_ingredients
             local results = {}
 
@@ -739,8 +770,9 @@ function Deadlock.MakeStackedRecipes()
                 else
                     expensive_ingredients = recipe_table.normal.ingredients
                 end
-            else
-                logger("1", string.format("nothing matched for %s", recipe_name))
+            end
+
+            if ingredients == nil then
                 ingredients = nil
             end
 

@@ -1,4 +1,35 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.8
+Date: 2020-11-01
+  Bugfixes:
+    - Some issues with Bobs recipes having both regular and normal recipes defined.
+---------------------------------------------------------------------------------------------------
+Version: 1.1.7
+Date: 2020-10-31
+  Bugfixes:
+    - Some more bug fixes when a recipe has no subgroup
+    - Added a check to validate that the expected stacked burnt result existed or not.
+---------------------------------------------------------------------------------------------------
+Version: 1.1.6
+Date: 2020-10-30
+  Changes:
+    - Added some SE stacked observation frames
+---------------------------------------------------------------------------------------------------
+Version: 1.1.5
+Date: 2020-10-30
+  Bugfixes:
+    - Some recipes broken
+---------------------------------------------------------------------------------------------------
+Version: 1.1.4
+Date: 2020-10-29
+  Changes:
+    - Fix stacked fuels when they have a fuel_emissions_multiplier factor
+---------------------------------------------------------------------------------------------------
+Version: 1.1.3
+Date: 2020-10-29
+  Changes:
+    - Fix Fuel issues with deadlock-api not adding  burnt_fuel
+---------------------------------------------------------------------------------------------------
 Version: 1.1.2
 Date: 2020-10-29
   Changes:
